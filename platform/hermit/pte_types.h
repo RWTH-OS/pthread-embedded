@@ -7,6 +7,6 @@
 #include <sys/types.h>
 #include <sys/timeb.h>
 
-typedef int pid_t;
+typedef unsigned int tid_t;
 
 #endif /* PTE_TYPES_H */

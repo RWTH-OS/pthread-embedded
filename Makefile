@@ -2,7 +2,7 @@ NEWLIB = ../x86/x86_64-hermit
 MAKE = make
 ARFLAGS = rsv
 CP = cp
-C_source =  $(wildcard *.c)
+C_source =  $(wildcard *.c) platform/hermit/pte_osal.c platform/helper/tls-helper.c
 NAME = libpthread.a
 OBJS = $(C_source:.c=.o)
 

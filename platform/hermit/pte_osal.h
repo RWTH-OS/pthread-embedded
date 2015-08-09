@@ -1,19 +1,18 @@
 #ifndef _OS_SUPPORT_H_
 #define _OS_SUPPORT_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
-typedef int pte_osThreadHandle;
+typedef void* pte_osThreadHandle;
+typedef size_t* pte_osSemaphoreHandle;
+typedef size_t* pte_osMutexHandle;
 
-typedef int pte_osSemaphoreHandle;
-
-typedef int pte_osMutexHandle;
-
-// Platform specific one must be included first
-//#include "psp_osal.h"
+#define OS_MAX_SIMUL_THREADS 32
+#define OS_DEFAULT_PRIO 8
+#define OS_MIN_PRIO 1
+#define OS_MAX_PRIO 31
 
 #include "pte_generic_osal.h"
-
-
 
 #endif // _OS_SUPPORT_H
