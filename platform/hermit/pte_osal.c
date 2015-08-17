@@ -100,6 +100,8 @@ void _hermit_reent_init(void)
    * => only called by crt0
    */
   __myreent_ptr = _impure_ptr;
+
+  pthread_init();
 }
 
 /* A new thread's stub entry point.  It retrieves the real entry point from the per thread control
