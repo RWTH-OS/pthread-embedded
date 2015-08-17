@@ -75,9 +75,8 @@ typedef struct
   } hermitThreadData;
 
 /*static*/ __thread void* globalHandle = NULL;
-/*static*/ __thread void *globalTls = NULL;
+/*static*/ __thread void* globalTls = NULL;
 /*static*/ __thread struct _reent* __myreent_ptr = NULL; 
-static struct _reent root_reent;
 
 /* lock to protect the heap */
 static pte_osMutexHandle __internal_malloc_lock;
@@ -90,8 +89,17 @@ static inline tid_t gettid(void)
 }
 
 struct _reent * __getreent(void)
-{       
-	return __myreent_ptr;
+{
+  return __myreent_ptr;
+}
+
+void _hermit_reent_init(void)
+{
+  /*
+   * prepare newlib to support reentrant calls
+   * => only called by crt0
+   */
+  __myreent_ptr = _impure_ptr;
 }
 
 /* A new thread's stub entry point.  It retrieves the real entry point from the per thread control
@@ -141,10 +149,6 @@ pte_osResult pte_osInit(void)
   pte_osResult result;
   hermitThreadData *pThreadData;
 
-  /* prepare newlib to support reentrant calls */
-  __myreent_ptr = &root_reent;
-  _REENT_INIT_PTR(&root_reent);
-
   /* lock to protect the heap*/
   pte_osMutexCreate(&__internal_malloc_lock);
 
@@ -186,7 +190,7 @@ pte_osResult pte_osInit(void)
 	  {
             memset(pThreadData, 0, sizeof(hermitThreadData));
             pThreadData->id = gettid();
-            pThreadData->myreent = &root_reent;
+            pThreadData->myreent = _impure_ptr;
             pThreadData->pTls = globalTls;
 	    result = PTE_OS_OK;
 	  }
@@ -258,7 +262,7 @@ pte_osResult pte_osThreadDelete(pte_osThreadHandle handle)
   pte_osSemaphoreDelete(pThreadData->start_sem);
   pte_osSemaphoreDelete(pThreadData->stop_sem);
   pteTlsThreadDestroy(pThreadData->pTls);
-  if (pThreadData->myreent && (pThreadData->myreent != &root_reent))
+  if (pThreadData->myreent && (pThreadData->myreent != _impure_ptr))
     free(pThreadData->myreent);
   free(pThreadData);
 
@@ -444,14 +448,20 @@ pte_osResult pte_osSemaphorePend(pte_osSemaphoreHandle handle, unsigned int *pTi
 
 /*
  * Pend on a semaphore- and allow the pend to be cancelled.
- *
- * Hermit provides no functionality to asynchronously interrupt a blocked call. We simulte
- * this by polling on the main semaphore and the cancellation semaphore and sleeping in a loop.
  */
 pte_osResult pte_osSemaphoreCancellablePend(pte_osSemaphoreHandle semHandle, unsigned int *pTimeout)
 {
-  printf("BUG: pte_osSemaphoreCancellablePend is not implemented!\n");
-  while(1);
+  unsigned int msec = 0;
+  int ret;
+
+  if (pTimeout)
+    msec = *pTimeout;
+  ret = SYSCALL2(__NR_sem_cancelablewait, semHandle, msec);
+
+  if (ret == -ETIME)
+    return PTE_OS_TIMEOUT;
+  if (ret)
+    return PTE_OS_INTERRUPTED;
 
   return PTE_OS_OK;
 }

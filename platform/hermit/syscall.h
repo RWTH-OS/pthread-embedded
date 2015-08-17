@@ -74,6 +74,7 @@ extern "C" {
 #define __NR_getprio		39
 #define __NR_setprio		40
 #define __NR_clone		41
+#define __NR_sem_cancelablewait	42
 
 inline static long
 syscall(int nr, unsigned long arg0, unsigned long arg1, unsigned long arg2)
