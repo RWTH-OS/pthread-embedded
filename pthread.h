@@ -980,6 +980,11 @@ enum
     class pte_exception_cancel : public pte_exception {};
     class pte_exception_exit   : public pte_exception {};
 
+    /* Operator to be compatible to libstd++ */
+    inline bool operator<(pte_handle_t const& l, pte_handle_t const& r)
+    {
+        return ((size_t) l.p) < ((size_t) r.p);
+    }
 #endif
 
 
