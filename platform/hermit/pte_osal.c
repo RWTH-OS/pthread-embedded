@@ -549,7 +549,7 @@ pte_osResult pte_osTlsFree(unsigned int index)
 
 int ftime(struct timeb *tb)
 {
-  uint64_t ticks = get_ticks();
+  uint64_t ticks = SYSCALL0(__NR_get_ticks);
 
   tb->time = ticks / TIMER_FREQ;
   tb->millitm = (ticks % TIMER_FREQ) * (TIMER_FREQ*1000);
