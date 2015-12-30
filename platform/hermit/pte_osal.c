@@ -27,7 +27,6 @@
 #include <string.h>
 #include "pte_osal.h"
 #include "pthread.h"
-#include "syscall.h"
 
 #include "tls-helper.h"
 
@@ -85,7 +84,7 @@ static pte_osMutexHandle __internal_env_lock;
 
 static inline tid_t gettid(void)
 {
-  return SYSCALL0(__NR_getpid);
+  return sys_getpid();
 }
 
 struct _reent * __getreent(void)
@@ -234,7 +233,7 @@ pte_osResult pte_osThreadCreate(pte_osThreadEntryPoint entryPoint,
   pte_osSemaphoreCreate(0, &pThreadData->stop_sem);
   pThreadData->done = 0;
 
-  if (SYSCALL3(__NR_clone, NULL, hermitStubThreadEntry, pThreadData)) {
+  if (sys_clone(NULL, hermitStubThreadEntry, pThreadData)) {
     if (pThreadData->myreent)
       free(pThreadData->myreent);
     free(pThreadData);
@@ -315,7 +314,7 @@ pte_osThreadHandle pte_osThreadGetHandle(void)
 
 int pte_osThreadGetPriority(pte_osThreadHandle threadHandle)
 {
-  int ret = SYSCALL1(__NR_getprio, threadHandle);
+  int ret = sys_getprio(threadHandle);
 
   if (ret)
     return PTE_OS_GENERAL_FAILURE;
@@ -325,7 +324,7 @@ int pte_osThreadGetPriority(pte_osThreadHandle threadHandle)
 
 pte_osResult pte_osThreadSetPriority(pte_osThreadHandle threadHandle, int newPriority)
 {
-  int ret = SYSCALL2(__NR_setprio, threadHandle, newPriority);
+  int ret = sys_setprio(threadHandle, newPriority);
 
   if (ret)
     return PTE_OS_GENERAL_FAILURE;
@@ -335,7 +334,7 @@ pte_osResult pte_osThreadSetPriority(pte_osThreadHandle threadHandle, int newPri
 
 void pte_osThreadSleep(unsigned int msecs)
 {
-  SYSCALL1(__NR_msleep, msecs);
+  sys_msleep(msecs);
 }
 
 int pte_osThreadGetMinPriority(void)
@@ -361,7 +360,7 @@ int pte_osThreadGetDefaultPriority(void)
 
 pte_osResult pte_osMutexCreate(pte_osMutexHandle *pHandle)
 {
-  if (SYSCALL2(__NR_sem_init, pHandle, 1/*, 1*/))
+  if (sys_sem_init(pHandle, 1/*, 1*/))
     return PTE_OS_NO_RESOURCES;	
 
   return PTE_OS_OK;
@@ -369,7 +368,7 @@ pte_osResult pte_osMutexCreate(pte_osMutexHandle *pHandle)
 
 pte_osResult pte_osMutexDelete(pte_osMutexHandle handle)
 {
-  if (SYSCALL1(__NR_sem_destroy, handle))
+  if (sys_sem_destroy(handle))
     return PTE_OS_NO_RESOURCES;
 
   return PTE_OS_OK;
@@ -377,7 +376,7 @@ pte_osResult pte_osMutexDelete(pte_osMutexHandle handle)
 
 pte_osResult pte_osMutexLock(pte_osMutexHandle handle)
 {
-  if (SYSCALL1(__NR_sem_wait, handle))
+  if (sys_sem_wait(handle))
     return PTE_OS_NO_RESOURCES;		
 
   return PTE_OS_OK;
@@ -385,7 +384,7 @@ pte_osResult pte_osMutexLock(pte_osMutexHandle handle)
 
 pte_osResult pte_osMutexTimedLock(pte_osMutexHandle handle, unsigned int timeoutMsecs)
 {
-  if (SYSCALL2(__NR_sem_timedwait, handle, timeoutMsecs))
+  if (sys_sem_timedwait(handle, timeoutMsecs))
     return PTE_OS_TIMEOUT;
 
   return PTE_OS_OK;
@@ -394,7 +393,7 @@ pte_osResult pte_osMutexTimedLock(pte_osMutexHandle handle, unsigned int timeout
 
 pte_osResult pte_osMutexUnlock(pte_osMutexHandle handle)
 {
-  if (SYSCALL1(__NR_sem_post, handle))
+  if (sys_sem_post(handle))
     return PTE_OS_NO_RESOURCES;
 
   return PTE_OS_OK;
@@ -408,7 +407,7 @@ pte_osResult pte_osMutexUnlock(pte_osMutexHandle handle)
 
 pte_osResult pte_osSemaphoreCreate(int initialValue, pte_osSemaphoreHandle *pHandle)
 {
-  if (SYSCALL2(__NR_sem_init, pHandle, initialValue/*, SEM_VALUE_MAX*/))
+  if (sys_sem_init(pHandle, initialValue/*, SEM_VALUE_MAX*/))
     return PTE_OS_NO_RESOURCES;
 
   return PTE_OS_OK;
@@ -416,7 +415,7 @@ pte_osResult pte_osSemaphoreCreate(int initialValue, pte_osSemaphoreHandle *pHan
 
 pte_osResult pte_osSemaphoreDelete(pte_osSemaphoreHandle handle)
 {
-  if (SYSCALL1(__NR_sem_destroy, handle))
+  if (sys_sem_destroy(handle))
     return PTE_OS_NO_RESOURCES;
 
   return PTE_OS_OK;
@@ -427,7 +426,7 @@ pte_osResult pte_osSemaphorePost(pte_osSemaphoreHandle handle, int count)
   int i;
 
   for (i=0; i<count; i++) {
-    if (SYSCALL1(__NR_sem_post, handle))
+    if (sys_sem_post(handle))
        return PTE_OS_NO_RESOURCES;
   }
 
@@ -437,10 +436,10 @@ pte_osResult pte_osSemaphorePost(pte_osSemaphoreHandle handle, int count)
 pte_osResult pte_osSemaphorePend(pte_osSemaphoreHandle handle, unsigned int *pTimeoutMsecs)
 {
   if (pTimeoutMsecs && *pTimeoutMsecs) {
-    if (SYSCALL2(__NR_sem_timedwait, handle, *pTimeoutMsecs))
+    if (sys_sem_timedwait(handle, *pTimeoutMsecs))
       return PTE_OS_TIMEOUT;
   } else {
-    if (SYSCALL1(__NR_sem_wait, handle))
+    if (sys_sem_wait(handle))
       return PTE_OS_NO_RESOURCES;
   }
 
@@ -458,7 +457,7 @@ pte_osResult pte_osSemaphoreCancellablePend(pte_osSemaphoreHandle semHandle, uns
 
   if (pTimeout)
     msec = *pTimeout;
-  ret = SYSCALL2(__NR_sem_cancelablewait, semHandle, msec);
+  ret = sys_sem_cancelablewait(semHandle, msec);
 
   if (ret == -ETIME)
     return PTE_OS_TIMEOUT;
@@ -549,7 +548,7 @@ pte_osResult pte_osTlsFree(unsigned int index)
 
 int ftime(struct timeb *tb)
 {
-  uint64_t ticks = SYSCALL0(__NR_get_ticks);
+  uint64_t ticks = sys_get_ticks();
 
   tb->time = ticks / TIMER_FREQ;
   tb->millitm = (ticks % TIMER_FREQ) * (TIMER_FREQ*1000);
