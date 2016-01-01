@@ -27,6 +27,7 @@
 #include <string.h>
 #include "pte_osal.h"
 #include "pthread.h"
+#include "syscall.h"
 
 #include "tls-helper.h"
 
@@ -108,7 +109,7 @@ void _hermit_reent_init(void)
  */
 static void hermitStubThreadEntry(void *argv)
 {
-  int ret;
+  //int ret;
   hermitThreadData *pThreadData = (hermitThreadData *) argv;
 
   if (!pThreadData || !pThreadData->myreent)
@@ -132,7 +133,7 @@ static void hermitStubThreadEntry(void *argv)
   /* wait for the resume command */
   pte_osSemaphorePend(pThreadData->start_sem, NULL);
 
-  ret = (*(pThreadData->entryPoint))(pThreadData->argv);
+  /*ret =*/ (*(pThreadData->entryPoint))(pThreadData->argv);
 
   pte_osThreadExit();
 
@@ -278,13 +279,16 @@ pte_osResult pte_osThreadExitAndDelete(pte_osThreadHandle handle)
   return PTE_OS_OK;
 }
 
+/* Declare helper function to terminate the current thread */
+void NORETURN do_exit(int arg);
+
 void pte_osThreadExit(void)
 {
   hermitThreadData *pThreadData = (hermitThreadData*) globalHandle;
 
   pThreadData->done = 1;
   pte_osSemaphorePost(pThreadData->stop_sem, 1);
-  exit(0);
+  do_exit(0);
 }
 
 /*
@@ -360,7 +364,7 @@ int pte_osThreadGetDefaultPriority(void)
 
 pte_osResult pte_osMutexCreate(pte_osMutexHandle *pHandle)
 {
-  if (sys_sem_init(pHandle, 1/*, 1*/))
+  if (sys_sem_init((sem_t**) pHandle, 1/*, 1*/))
     return PTE_OS_NO_RESOURCES;	
 
   return PTE_OS_OK;
@@ -407,7 +411,7 @@ pte_osResult pte_osMutexUnlock(pte_osMutexHandle handle)
 
 pte_osResult pte_osSemaphoreCreate(int initialValue, pte_osSemaphoreHandle *pHandle)
 {
-  if (sys_sem_init(pHandle, initialValue/*, SEM_VALUE_MAX*/))
+  if (sys_sem_init((sem_t**) pHandle, initialValue/*, SEM_VALUE_MAX*/))
     return PTE_OS_NO_RESOURCES;
 
   return PTE_OS_OK;

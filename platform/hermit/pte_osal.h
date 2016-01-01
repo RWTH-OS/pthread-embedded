@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 typedef void* pte_osThreadHandle;
-typedef size_t* pte_osSemaphoreHandle;
-typedef size_t* pte_osMutexHandle;
+typedef void* pte_osSemaphoreHandle;
+typedef void* pte_osMutexHandle;
 
 #define OS_MAX_SIMUL_THREADS 32
 #define OS_DEFAULT_PRIO 8
