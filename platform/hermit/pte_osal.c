@@ -74,9 +74,9 @@ typedef struct
     int done;
   } hermitThreadData;
 
-/*static*/ __thread void* globalHandle = NULL;
-/*static*/ __thread void* globalTls = NULL;
-/*static*/ __thread struct _reent* __myreent_ptr = NULL; 
+static __thread void* globalHandle = NULL;
+static __thread void* globalTls = NULL;
+static __thread struct _reent* __myreent_ptr = NULL;
 
 /* lock to protect the heap */
 static pte_osMutexHandle __internal_malloc_lock;
