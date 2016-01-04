@@ -93,6 +93,9 @@ struct _reent * __getreent(void)
   return __myreent_ptr;
 }
 
+/* Declare helper function to terminate the current thread */
+void NORETURN do_exit(int arg);
+
 void _hermit_reent_init(void)
 {
   /*
@@ -113,7 +116,7 @@ static void hermitStubThreadEntry(void *argv)
   hermitThreadData *pThreadData = (hermitThreadData *) argv;
 
   if (!pThreadData || !pThreadData->myreent)
-    exit(-PTE_OS_NO_RESOURCES);
+    do_exit(-PTE_OS_NO_RESOURCES);
 
   /* prepare newlib to support reentrant calls */
   __myreent_ptr = pThreadData->myreent;
@@ -127,7 +130,7 @@ static void hermitStubThreadEntry(void *argv)
   if (globalTls == NULL)
     {
       HERMIT_DEBUG("pteTlsThreadInit: PTE_OS_NO_RESOURCES\n");
-      exit(-PTE_OS_NO_RESOURCES);
+      do_exit(-PTE_OS_NO_RESOURCES);
     }
 
   /* wait for the resume command */
@@ -278,9 +281,6 @@ pte_osResult pte_osThreadExitAndDelete(pte_osThreadHandle handle)
 
   return PTE_OS_OK;
 }
-
-/* Declare helper function to terminate the current thread */
-void NORETURN do_exit(int arg);
 
 void pte_osThreadExit(void)
 {
