@@ -76,7 +76,7 @@ sched_yield (void)
  * ------------------------------------------------------
  */
 {
-  pte_osThreadSleep (1);
+  pte_osYield ();
 
   return 0;
 }

@@ -104,7 +104,7 @@ pthread_delay_np (struct timespec *interval)
   if (interval->tv_sec == 0L && interval->tv_nsec == 0L)
     {
       pthread_testcancel ();
-      pte_osThreadSleep (1);
+      pte_osYield ();
       pthread_testcancel ();
       return (0);
     }

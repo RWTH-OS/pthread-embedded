@@ -226,6 +226,25 @@ pte_osResult pte_osThreadCheckCancel(pte_osThreadHandle threadHandle);
  */
 void pte_osThreadSleep(unsigned int msecs);
 
+#ifdef __hermit__
+void sys_yield(void);
+
+static inline void pte_osYield(void)
+{
+	sys_yield();
+}
+#else
+/**
+ * pte_osYield causes the calling thread to relinquish the CPU.
+ * The thread is moved to the end of the queue for its static priority
+ * and a new thread gets to run.
+ */
+static inline void pte_osYield(void)
+{
+	pte_osThreadSleep(1);
+}
+#endif
+
 /**
  * Returns the maximum allowable priority
  */

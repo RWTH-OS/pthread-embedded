@@ -135,7 +135,7 @@ sem_destroy (sem_t * sem)
                        * routines. Due to the SEM_VALUE_MAX value, if sem_post or
                        * sem_wait were blocked by us they should fall through.
                        */
-                      pte_osThreadSleep(1);
+                      pte_osYield();
                     }
                   while (pthread_mutex_destroy (&s->lock) == EBUSY);
                 }
