@@ -84,6 +84,7 @@ int sys_sem_cancelablewait(sem_t* sem, unsigned int ms);
 int sys_clone(tid_t* id, void* ep, void* argv);
 off_t sys_lseek(int fd, off_t offset, int whence);
 size_t sys_get_ticks(void);
+void sys_yield(void);
 
 #define __NR_exit 		0
 #define __NR_write		1
