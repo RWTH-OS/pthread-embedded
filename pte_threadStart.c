@@ -242,7 +242,7 @@ int pte_threadStart (void *vthreadParms)
    * Never reached.
    */
 
-  return (unsigned) status;
-
+  //return (unsigned) status;
+  return 0;
 }				/* pte_threadStart */
 
