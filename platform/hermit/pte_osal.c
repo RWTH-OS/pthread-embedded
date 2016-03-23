@@ -96,16 +96,19 @@ struct _reent * __getreent(void)
 /* Declare helper function to terminate the current thread */
 void NORETURN do_exit(int arg);
 
-void _hermit_reent_init(void)
+static void hermit_reent_init(void)
 {
   /*
    * prepare newlib to support reentrant calls
-   * => only called by crt0
    */
   __myreent_ptr = _impure_ptr;
-
-  pthread_init();
 }
+
+/*
+ * create pointers for (pre)init_array to initialize pte
+ */
+__attribute__((section(".preinit_array"))) typeof(hermit_reent_init) *__pte_preinit = hermit_reent_init;
+__attribute__((section(".init_array"))) typeof(pthread_init) *__pte_init = pthread_init;
 
 /* A new thread's stub entry point.  It retrieves the real entry point from the per thread control
  * data as well as any parameters to this function, and then calls the entry point.
