@@ -96,19 +96,27 @@ struct _reent * __getreent(void)
 /* Declare helper function to terminate the current thread */
 void NORETURN do_exit(int arg);
 
-static void hermit_reent_init(void)
+static void __reent_init(void)
 {
   /*
    * prepare newlib to support reentrant calls
    */
   __myreent_ptr = _impure_ptr;
+
+  /* lock to protect the heap*/
+  pte_osMutexCreate(&__internal_malloc_lock);
+
+  /* lock to protect the environment */
+  pte_osMutexCreate(&__internal_env_lock);
+
+  /* initialize pthread library */
+  pthread_init();
 }
 
 /*
- * create pointers for (pre)init_array to initialize pte
+ * create pointer for preinit_array to initialize the reentrant version of the libc
  */
-__attribute__((section(".preinit_array"))) typeof(hermit_reent_init) *__pte_preinit = hermit_reent_init;
-__attribute__((section(".init_array"))) typeof(pthread_init) *__pte_init = pthread_init;
+__attribute__((section(".preinit_array"))) typeof(__reent_init) *__pte_preinit = __reent_init;
 
 /* A new thread's stub entry point.  It retrieves the real entry point from the per thread control
  * data as well as any parameters to this function, and then calls the entry point.
@@ -156,12 +164,6 @@ pte_osResult pte_osInit(void)
 {
   pte_osResult result;
   hermitThreadData *pThreadData;
-
-  /* lock to protect the heap*/
-  pte_osMutexCreate(&__internal_malloc_lock);
-
-  /* lock to protect the environment */
-  pte_osMutexCreate(&__internal_env_lock);
 
   /* Allocate and initialize TLS support */
   result = pteTlsGlobalInit(HERMIT_MAX_TLS);
