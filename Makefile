@@ -32,11 +32,11 @@ $(NAME): $(OBJS)
 	
 clean:
 	@echo Cleaning examples
-	$Q$(RM) $(NAME) *.o *~ 
+	$Q$(RM) $(NAME) *.o *~ platform/hermit/*.o platform/helper/*.o
 
 veryclean:
 	@echo Propper cleaning examples
-	$Q$(RM) $(NAME) *.o *~
+	$Q$(RM) $(NAME) *.o *~ platform/hermit/*.o platform/helper/*.o
 
 depend:
 	$Q$(CC_FOR_TARGET) -MM $(CFLAGS_FOR_TARGET) *.c > Makefile.dep
