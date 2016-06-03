@@ -48,6 +48,9 @@
 /* defined in crt0.o */
 uint64_t get_ticks(void);
 
+/* newlibs' helper function to initialize signal handling */
+int _init_signal_r(struct _reent*);
+
 /* TLS key used to access hermitThreadData struct for reach thread. */
 static unsigned int threadDataKey;
 
@@ -132,6 +135,9 @@ static void hermitStubThreadEntry(void *argv)
   /* prepare newlib to support reentrant calls */
   __myreent_ptr = pThreadData->myreent;
   _REENT_INIT_PTR(pThreadData->myreent);
+
+  /* initialize basic signal handling */
+  _init_signal_r(pThreadData->myreent);
 
   pThreadData->id = gettid();
   globalHandle = (void*) pThreadData;
