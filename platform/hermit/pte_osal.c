@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <reent.h>
 #include <string.h>
 #include "pte_osal.h"
 #include "pthread.h"
@@ -214,6 +215,19 @@ pte_osResult pte_osInit(void)
   }
 
   return result;
+}
+
+/***************************************************************************
+ *
+ * Signal handling
+ *
+ **************************************************************************/
+
+int pte_kill(pte_osThreadHandle threadId, int sig)
+{
+  hermitThreadData* pThreadData = (hermitThreadData*) threadId;
+
+  return _kill_r(__getreent(), pThreadData->id, sig);
 }
 
 /****************************************************************************

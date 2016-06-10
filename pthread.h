@@ -921,14 +921,16 @@ enum
     int  pthread_rwlockattr_setpshared (pthread_rwlockattr_t * attr,
                                         int pshared);
 
-#if PTE_LEVEL >= PTE_LEVEL_MAX - 1
+#if (PTE_LEVEL >= PTE_LEVEL_MAX - 1) || defined(__hermit__)
 
     /*
      * Signal Functions. Should be defined in <signal.h> but we might
      * already have signal.h that don't define these.
      */
     int  pthread_kill(pthread_t thread, int sig);
+#endif
 
+#if PTE_LEVEL >= PTE_LEVEL_MAX - 1
     /*
      * Non-portable functions
      */
