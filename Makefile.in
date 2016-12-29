@@ -1,10 +1,20 @@
-NEWLIB = ../x86/x86_64-hermit
+prefix = @prefix@
+NEWLIB = $(prefix)/x86_64-hermit
 MAKE = make
+CC_FOR_TARGET = x86_64-hermit-gcc
+CFLAGS_FOR_TARGET = -m64 -mtls-direct-seg-refs -O3 -ftree-vectorize
+AR_FOR_TARGET = x86_64-hermit-ar
 ARFLAGS_FOR_TARGET = rsv
 CP = cp
 C_source =  $(wildcard *.c) platform/hermit/pte_osal.c platform/helper/tls-helper.c
 NAME = libpthread.a
 OBJS = $(C_source:.c=.o)
+RM = rm -rf
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_DATA = @INSTALL_DATA@
 
 #
 # Prettify output
@@ -25,10 +35,12 @@ all: $(NAME)
 
 $(NAME): $(OBJS)
 	$Q$(AR_FOR_TARGET) $(ARFLAGS_FOR_TARGET) $@ $(OBJS)
-	$Q$(CP) $@ $(NEWLIB)/lib
-	$Q$(CP) pthread.h $(NEWLIB)/include
-	$Q$(CP) semaphore.h $(NEWLIB)/include
-	$Q$(CP) platform/hermit/pte_types.h $(NEWLIB)/include
+
+install:
+	$(INSTALL_DATA) $(NAME) NEWLIB/lib
+	$(INSTALL_DATA) pthread.h $(NEWLIB)/include
+	$(INSTALL_DATA) semaphore.h $(NEWLIB)/include
+	$(INSTALL_DATA) platform/hermit/pte_types.h $(NEWLIB)/include
 	
 clean:
 	@echo Cleaning examples
