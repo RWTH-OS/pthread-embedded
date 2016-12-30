@@ -9,6 +9,9 @@ before_install:
 - sudo apt-get install -y nasm texinfo libmpfr-dev libmpc-dev libgmp-dev libisl-dev packaging-dev
 script:
 - rm -rf .git
+- cd ..
+- mv pthread-embedded pthread-embedded-1.0
+- tar -czf pthread-embedded-1.0.orig.tar.gz pthread-embedded-1.0
 - cd $TOPDIR
 - wget https://bintray.com/rwth-os/hermitcore/download_file?file_path=binutils-hermit_2.26.1-1_amd64.deb -O binutils-hermit_2.26.1-1_amd64.deb
 - sudo dpkg -i ./binutils-hermit_2.26.1-1_amd64.deb
@@ -17,8 +20,8 @@ script:
 - wget https://www.lankes.org/deploy/bootstrap.tar.gz
 - tar xzf bootstrap.tar.gz
 - cd -
-- ./configure --prefix=/opt/hermit
-- make
+- cd pthread-embedded-1.0
+- debuild -e PATH -us -uc
 deploy:
   on: production
   provider: bintray
