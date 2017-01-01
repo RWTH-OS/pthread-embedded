@@ -1,5 +1,5 @@
 #!/bin/sh
-# postrm script for pthread-embeded
+# postrm script for pthread-embedded
 #
 # see: dh_installdeb(1)
 

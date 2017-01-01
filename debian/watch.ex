@@ -11,29 +11,29 @@ version=4
 
 # HTTP site (basic)
 #http://example.com/downloads.html \
-#  files/pthread-embeded-([\d\.]+)\.tar\.gz debian uupdate
+#  files/pthread-embedded-([\d\.]+)\.tar\.gz debian uupdate
 
 # Uncommment to examine a FTP server
-#ftp://ftp.example.com/pub/pthread-embeded-(.*)\.tar\.gz debian uupdate
+#ftp://ftp.example.com/pub/pthread-embedded-(.*)\.tar\.gz debian uupdate
 
 # SourceForge hosted projects
-# http://sf.net/pthread-embeded/ pthread-embeded-(.*)\.tar\.gz debian uupdate
+# http://sf.net/pthread-embedded/ pthread-embedded-(.*)\.tar\.gz debian uupdate
 
 # GitHub hosted projects
 #opts="filenamemangle="s%(?:.*?)?v?(\d[\d.]*)\.tar\.gz%<project>-$1.tar.gz%" \
-#   https://github.com/<user>/pthread-embeded/tags \
+#   https://github.com/<user>/pthread-embedded/tags \
 #   (?:.*?/)?v?(\d[\d.]*)\.tar\.gz debian uupdate
 
 # PyPI
-# https://pypi.python.org/packages/source/<initial>/pthread-embeded/ \
-#   pthread-embeded-(.+)\.tar\.gz debian uupdate
+# https://pypi.python.org/packages/source/<initial>/pthread-embedded/ \
+#   pthread-embedded-(.+)\.tar\.gz debian uupdate
 
 # Direct Git
-# opts="mode=git" http://git.example.com/pthread-embeded.git \
+# opts="mode=git" http://git.example.com/pthread-embedded.git \
 #   refs/tags/v([\d\.]+) debian uupdate
 
 
 
 
 # Uncomment to find new files on GooglePages
-# http://example.googlepages.com/foo.html pthread-embeded-(.*)\.tar\.gz
+# http://example.googlepages.com/foo.html pthread-embedded-(.*)\.tar\.gz

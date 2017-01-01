@@ -4,7 +4,7 @@ if [ true != "$INIT_D_SCRIPT_SOURCED" ] ; then
     set "$0" "$@"; INIT_D_SCRIPT_SOURCED=true . /lib/init/init-d-script
 fi
 ### BEGIN INIT INFO
-# Provides:          pthread-embeded
+# Provides:          pthread-embedded
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
@@ -17,8 +17,8 @@ fi
 
 # Author: Stefan Lankes <slankes@eonerc.rwth-aachen.de>
 
-DESC="pthread-embeded"
-DAEMON=/usr/bin/pthread-embeded
+DESC="pthread-embedded"
+DAEMON=/usr/bin/pthread-embedded
 
 # This is an example to start a single forking daemon capable of writing
 # a pid file. To get other behaviors, implement do_start(), do_stop() or

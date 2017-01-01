@@ -26,8 +26,8 @@ manpage.1: manpage.sgml
   <!ENTITY dhsection   "<manvolnum>SECTION</manvolnum>">
   <!ENTITY dhemail     "<email>slankes@eonerc.rwth-aachen.de</email>">
   <!ENTITY dhusername  "Stefan Lankes">
-  <!ENTITY dhucpackage "<refentrytitle>Pthread-embeded</refentrytitle>">
-  <!ENTITY dhpackage   "pthread-embeded">
+  <!ENTITY dhucpackage "<refentrytitle>Pthread-embedded</refentrytitle>">
+  <!ENTITY dhpackage   "pthread-embedded">
 
   <!ENTITY debian      "<productname>Debian</productname>">
   <!ENTITY gnu         "<acronym>GNU</acronym>">

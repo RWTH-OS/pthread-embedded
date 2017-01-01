@@ -1,5 +1,5 @@
 #!/bin/sh
-# prerm script for pthread-embeded
+# prerm script for pthread-embedded
 #
 # see: dh_installdeb(1)
 
