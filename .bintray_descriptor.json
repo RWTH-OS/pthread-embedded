@@ -7,7 +7,7 @@
         "issue_tracker_url": "https://github.com/RWTH-OS/HermitCore/issues",
         "vcs_url": "https://github.com/RWTH-OS/newlib.git",
         "github_release_notes_file": "RELEASE",
-        "licenses": ["LGPL 2.0"],
+        "licenses": ["LGPL 2.1"],
         "public_download_numbers": false,
         "public_stats": false
     },
