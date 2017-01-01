@@ -11,7 +11,7 @@ script:
 - rm -rf .git
 - cd ..
 - mv pthread-embedded pthread-embedded-1.0
-- tar -czf pthread-embedded-1.0.orig.tar.gz pthread-embedded-1.0
+- tar -czf pthread-embedded_1.0.orig.tar.gz pthread-embedded-1.0
 - cd $TOPDIR
 - wget https://bintray.com/rwth-os/hermitcore/download_file?file_path=binutils-hermit_2.26.1-1_amd64.deb -O binutils-hermit_2.26.1-1_amd64.deb
 - sudo dpkg -i ./binutils-hermit_2.26.1-1_amd64.deb
