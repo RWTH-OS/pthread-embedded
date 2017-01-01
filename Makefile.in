@@ -37,7 +37,7 @@ $(NAME): $(OBJS)
 	$Q$(AR_FOR_TARGET) $(ARFLAGS_FOR_TARGET) $@ $(OBJS)
 
 install:
-	$(INSTALL_DATA) $(NAME) NEWLIB/lib
+	$(INSTALL_DATA) $(NAME) $(NEWLIB)/lib
 	$(INSTALL_DATA) pthread.h $(NEWLIB)/include
 	$(INSTALL_DATA) semaphore.h $(NEWLIB)/include
 	$(INSTALL_DATA) platform/hermit/pte_types.h $(NEWLIB)/include
