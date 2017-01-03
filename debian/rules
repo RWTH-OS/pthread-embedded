@@ -27,7 +27,7 @@ override_dh_auto_configure:
 
 override_dh_auto_install:
 	mkdir -p debian/pthread-embedded-hermit/opt/hermit/x86_64-hermit/lib
-	mkdit -p debian/pthread-embedded-hermit/opt/hermit/x86_64-hermit/include
+	mkdir -p debian/pthread-embedded-hermit/opt/hermit/x86_64-hermit/include
 	/usr/bin/install -c -m 644 libpthread.a debian/pthread-embedded-hermit/opt/hermit/x86_64-hermit/lib
 	/usr/bin/install -c -m 644 pthread.h debian/pthread-embedded-hermit/opt/hermit/x86_64-hermit/include
 	/usr/bin/install -c -m 644 semaphore.h debian/pthread-embedded-hermit/opt/hermit/x86_64-hermit/include
