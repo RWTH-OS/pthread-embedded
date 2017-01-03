@@ -8,7 +8,7 @@ Homepage: http://www.hermitcore.org
 #Vcs-Git: git://anonscm.debian.org/collab-maint/pthread-embedded.git
 #Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/pthread-embedded.git
 
-Package: pthread-embedded
+Package: pthread-embedded-hermit
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: A POSIX Thread Library for HermitCore
