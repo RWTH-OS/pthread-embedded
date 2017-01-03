@@ -1,10 +1,10 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.\" (C) Copyright 2016 Stefan Lankes <slankes@eonerc.rwth-aachen.de>,
+.\" (C) Copyright 2017 Stefan Lankes <slankes@eonerc.rwth-aachen.de>,
 .\"
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH Pthread-embedded SECTION "December 30 2016"
+.TH Pthread-embedded SECTION "January  3 2017"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
