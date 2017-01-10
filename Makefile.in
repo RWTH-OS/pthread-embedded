@@ -38,9 +38,11 @@ $(NAME): $(OBJS)
 
 install:
 	$(INSTALL_DATA) $(NAME) $(NEWLIB)/lib
-	#$(INSTALL_DATA) pthread.h $(NEWLIB)/include
-	#$(INSTALL_DATA) semaphore.h $(NEWLIB)/include
-	#$(INSTALL_DATA) platform/hermit/pte_types.h $(NEWLIB)/include
+
+headers:
+	$(INSTALL_DATA) pthread.h $(NEWLIB)/include
+	$(INSTALL_DATA) semaphore.h $(NEWLIB)/include
+	$(INSTALL_DATA) platform/hermit/pte_types.h $(NEWLIB)/include
 	
 clean:
 	@echo Cleaning examples
