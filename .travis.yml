@@ -4,24 +4,20 @@ git:
   submodules: false
 language: c
 compiler: gcc
+
 before_install:
+- echo "deb https://dl.bintray.com/rwth-os/hermitcore vivid main" | sudo tee -a /etc/apt/sources.list
 - sudo apt-get -qq update
 - sudo apt-get install -y nasm texinfo libmpfr-dev libmpc-dev libgmp-dev libisl-dev packaging-dev
+- sudo apt-get install gcc-hermit-bootstrap binutils-hermit newlib-hermit
+
 script:
-- rm -rf .git
 - cd ..
 - mv pthread-embedded pthread-embedded-1.0
-- tar -czf pthread-embedded_1.0.orig.tar.gz pthread-embedded-1.0
-- cd $TOPDIR
-- wget https://bintray.com/rwth-os/hermitcore/download_file?file_path=binutils-hermit_2.26.1-1_amd64.deb -O binutils-hermit_2.26.1-1_amd64.deb
-- sudo dpkg -i ./binutils-hermit_2.26.1-1_amd64.deb
-- wget https://bintray.com/rwth-os/hermitcore/download_file?file_path=newlib-hermit_2.4.0-1_amd64.deb -O newlib-hermit_2.4.0-1_amd64.deb
-- sudo dpkg -i ./newlib-hermit_2.4.0-1_amd64.deb
-- wget https://www.lankes.org/deploy/bootstrap.tar.gz
-- tar xzf bootstrap.tar.gz
-- cd -
+- tar czf pthread-embedded_1.0.orig.tar.gz pthread-embedded-1.0 --exclude=.git
 - cd pthread-embedded-1.0
-- debuild -e PATH -us -uc
+- time debuild -e PATH -us -uc -j2
+
 deploy:
   on: production
   provider: bintray
@@ -30,27 +26,7 @@ deploy:
     secure: csTlakUH0AOs7sTykxwxitujXeigmGI/qHT5uyxumwyagBJc2wDrDquo8wkU/jWGbw+DS3M3yJktFOYJTNvvYs4U/Av+Aj0yYsvi5pLT3dBJoc04KzeZG7dIUpRsLIlyAGIq6cfNNonuEfinrm8ZtjR/Uy2kScIFo8y6ZnyXKo+ss9k1A+ZnIvKUZ0W4H2eNRPtbbXKChPemSX5h/NR7maB9M3cEw0X+FWLG1jvuzSUM1rZb7a0KsrO7NqFh3WHWR6yR7oqjuSQpkanw3u4I9gIjVjhJF+PyvvGadTmL5Gx9ITw6oDPikNFrOiKepvHn3QfQ7bT8eVuHIolDw7c6YrikwzUnpnkpltjfnvKR8zoGLAupwQMZYdQTJOEnfzpoLcCD8pCv3uwo3BBzmAKJ/fV6J+f5Y9mJ0+fLiZ0+7crbQXHkvvwGgHIKGjrJKutNgVef8qduyGz0Fwn9EjcMmGJ7ogLm2AmFWxmDB3OCgA81PnLwHRqEs/b8RdMWtVb+7b/sKt+e2MN1cFWM1SlLt3ofwZHhXfBUMUfq2TU+L3swyn3HecsbL18Zmsc/vmiR2oPozXBQO7XYXTZxJP3hutAOjOyOxV25Hv6Y7G1NcqH4SaOQGEwoLJDhPcXEsXyNWICjTPQbpt62UXTf/kiuNqxq/1oJjqjtezue4O1kDys=
   key:
     secure: RiT/yLNdVL8cEFVWxYJ1x4Hx12ULVJuphv/73VioLeAuvPzM+Sqm8/rbOtsBMlvY5Z63QlT4AKdPnq4lS8ifD5nepU58YwNS2rig7Tr2865rUzntZa/whZx7EscpQFQZo1ZbH5+WeUzNqsX5/XO0VdTomeW1WxY2s3gGRUJRNwktrJg+3vAEndcSF5hQclTDiCRJCjC2IFgtgmxw0fRROYSvVMBnYtOwgHuebdMFLs4CBOzNttOYLmUmxpeTP+E90Mwqv4k+2/nF5hZcj/zzAyUlniugZAZQjy0MGDp1qEvsvmY/ZNuXcmMdmzmwLiUl7l0rbSeKPcv2Rii0vJwskqweDUWm80/FgNPUYm4i8PgPASbq60YeOw9mH1JugPxP7TtC90K5hT+AqtxbA/Al8J/oSYW716C5BVvaVTD5zhQuIVXDjN4x04zAuA3nQ2JrR50r7oGMHLwy9Ku3GsLfdqx1l0omwkcBWxLQ+BbbSaG0Kn+N9izg+JV1a2/Bz2CMeOr0phNTZQAYtNDlW8eOI5/HyYjQoF8EWVAXun0CU6djvKsz7P3xm5Qgve+EYt1eYgzUWhGz0GAlERKzm14KlLIVjktjAjehpLj7AvZlT/lx/nIB0kmtn0x+Egd8FjjnokdWLP9EdKFk4uPBTJR4528LnPTMJbuA8Z8BTvbcrUI=
+
 env:
    global:
-     - TOPDIR=/home/travis/build
-     - PATH=$PATH:$TOPDIR/x86/bin:/opt/hermit/bin
-     - CROSSCOMPREFIX = x86_64-hermit
-     - FC_FOR_TARGET = $CROSSCOMPREFIX-gfortran
-     - CC_FOR_TARGET = $CROSSCOMPREFIX-gcc
-     - CXX_FOR_TARGET = $CROSSCOMPREFIX-g++
-     - GCC_FOR_TARGET = $CROSSCOMPREFIX-gcc
-     - CPP_FOR_TARGET = $CROSSCOMPREFIX-cpp
-     - AR_FOR_TARGET = $CROSSCOMPREFIX-ar
-     - AS_FOR_TARGET = $CROSSCOMPREFIX-as
-     - LD_FOR_TARGET = $CROSSCOMPREFIX-ld
-     - NM_FOR_TARGET = $CROSSCOMPREFIX-nm
-     - OBJDUMP_FOR_TARGET = $CROSSCOMPREFIX-objdump
-     - OBJCOPY_FOR_TARGET = $CROSSCOMPREFIX-objcopy
-     - RANLIB_FOR_TARGET = $CROSSCOMPREFIX-ranlib
-     - STRIP_FOR_TARGET = $CROSSCOMPREFIX-strip
-     - READELF_FOR_TARGET = $CROSSCOMPREFIX-readelf
-     - ELFEDIT_FOR_TARGET = $CROSSCOMPREFIX-elfedit
-     - CFLAGS_FOR_TARGE = -m64 -mtls-direct-seg-refs -O3 -ftree-vectorize
-     - FCFLAGS_FOR_TARGET = -m64 -mtls-direct-seg-refs -O3 -ftree-vectorize
-     - FFLAGS_FOR_TARGET = -m64 -mtls-direct-seg-refs -O3 -ftree-vectorize
-     - CXXFLAGS_FOR_TARGET = -m64 -mtls-direct-seg-refs -O3 -ftree-vectorize
+     - PATH=$PATH:/opt/hermit/bin
