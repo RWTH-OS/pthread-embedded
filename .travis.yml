@@ -9,7 +9,7 @@ before_install:
 - echo "deb https://dl.bintray.com/rwth-os/hermitcore vivid main" | sudo tee -a /etc/apt/sources.list
 - sudo apt-get -qq update
 - sudo apt-get install -y nasm texinfo libmpfr-dev libmpc-dev libgmp-dev libisl-dev packaging-dev
-- sudo apt-get install gcc-hermit-bootstrap binutils-hermit newlib-hermit
+- sudo apt-get install --force-yes gcc-hermit-bootstrap binutils-hermit newlib-hermit
 
 script:
 - cd ..
