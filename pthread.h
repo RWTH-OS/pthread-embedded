@@ -987,6 +987,12 @@ enum
     {
         return ((size_t) l.p) < ((size_t) r.p);
     }
+
+    /* Operator to be compatible to libstd++ */
+    inline bool operator==(pte_handle_t const& l, pte_handle_t const& r)
+    {
+        return ((size_t) l.p) == ((size_t) r.p);
+    }
 #endif
 
 
