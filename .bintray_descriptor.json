@@ -13,7 +13,7 @@
     },
 
     "version": {
-        "name": "1.0",
+        "name": "1.1",
         "desc": "HermitCore's Pthread library",
         "gpgSign": false
     },

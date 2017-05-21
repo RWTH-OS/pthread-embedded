@@ -1,3 +1,9 @@
+pthread-embedded (1.1-1) unstable; urgency=medium
+
+  * add sytem interface to create spinlocks
+
+ -- Stefan Lankes <slankes@eonerc.rwth-aachen.de>  Sun, 21 May 2017 23:21:00 +0100
+
 pthread-embedded (1.0-1) unstable; urgency=medium
 
   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
