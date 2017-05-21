@@ -57,6 +57,9 @@ extern "C" {
 struct sem;
 typedef struct sem sem_t;
 
+struct spinlock;
+typedef struct spinlock spinlock_t;
+
 /*
  * HermitCore is a libOS.
  * => classical system calls are realized as normal function
@@ -75,6 +78,10 @@ ssize_t sys_sbrk(int incr);
 int sys_open(const char* name, int flags, int mode);
 int sys_close(int fd);
 void sys_msleep(unsigned int ms);
+int sys_spinlock_init(spinlock_t** lock);
+int sys_spinlock_destroy(spinlock_t* lock);
+int sys_spinlock_lock(spinlock_t* lock);
+int sys_spinlock_unlock(spinlock_t* lock);
 int sys_sem_init(sem_t** sem, unsigned int value);
 int sys_sem_destroy(sem_t* sem);
 int sys_sem_wait(sem_t* sem);

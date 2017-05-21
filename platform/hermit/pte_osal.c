@@ -36,8 +36,14 @@
 #define HERMIT_MAX_TLS		32
 #define MAX_HERMIT_UID		32
 
+#ifndef SIGTERM
+#define SIGTERM 1
+#endif
+
 #if 1
-#define HERMIT_DEBUG(x) printf(x)
+int kprintf(const char*, ...);
+
+#define HERMIT_DEBUG(...) kprintf(__VA_ARGS__);
 #else
 #define HERMIT_DEBUG(x)
 #endif
@@ -83,9 +89,9 @@ static __thread void* globalTls = NULL;
 static __thread struct _reent* __myreent_ptr = NULL;
 
 /* lock to protect the heap */
-static pte_osMutexHandle __internal_malloc_lock;
+static spinlock_t* __internal_malloc_lock;
 /* lock to protect the environment */
-static pte_osMutexHandle __internal_env_lock;
+static spinlock_t* __internal_env_lock;
 
 static inline tid_t gettid(void)
 {
@@ -108,10 +114,12 @@ static void __reent_init(void)
   __myreent_ptr = _impure_ptr;
 
   /* lock to protect the heap*/
-  pte_osMutexCreate(&__internal_malloc_lock);
+  sys_spinlock_init(&__internal_malloc_lock);
+  //HERMIT_DEBUG("malloc_lock %p\n", &__internal_malloc_lock);
 
   /* lock to protect the environment */
-  pte_osMutexCreate(&__internal_env_lock);
+  sys_spinlock_init(&__internal_env_lock);
+  //HERMIT_DEBUG("env_lock %p\n", &__internal_env_lock);
 
   /* initialize pthread library */
   pthread_init();
@@ -257,10 +265,13 @@ pte_osResult pte_osThreadCreate(pte_osThreadEntryPoint entryPoint,
 
   pThreadData->entryPoint = entryPoint;
   pThreadData->argv = argv;
+  pThreadData->start_sem = pThreadData->stop_sem = NULL;
   pThreadData->myreent = (struct _reent*) malloc(sizeof(struct _reent));
   pte_osSemaphoreCreate(0, &pThreadData->start_sem);
   pte_osSemaphoreCreate(0, &pThreadData->stop_sem);
   pThreadData->done = 0;
+  //HERMIT_DEBUG("init start_sem %p\n", pThreadData->start_sem);
+  //HERMIT_DEBUG("init stop_sem %p\n", pThreadData->stop_sem);
 
   if (sys_clone(NULL, hermitStubThreadEntry, pThreadData)) {
     if (pThreadData->myreent)
@@ -301,8 +312,10 @@ pte_osResult pte_osThreadDelete(pte_osThreadHandle handle)
 
 pte_osResult pte_osThreadExitAndDelete(pte_osThreadHandle handle)
 {
+  hermitThreadData *pThreadData = (hermitThreadData*) handle;
+
+  pte_kill(pThreadData, SIGTERM);
   pte_osThreadDelete(handle);
-  pte_osThreadExit();
 
   return PTE_OS_OK;
 }
@@ -591,22 +604,22 @@ int ftime(struct timeb *tb)
  *
  ***************************************************************************/
 
-void __malloc_lock(void* ptr)
+void __malloc_lock(struct _reent *ptr)
 {
-  pte_osMutexLock(__internal_malloc_lock);
+  sys_spinlock_lock(__internal_malloc_lock);
 }
 
-void __malloc_unlock(void* ptr)
+void __malloc_unlock(struct _reent *ptr)
 {
-  pte_osMutexUnlock(__internal_malloc_lock);
+  sys_spinlock_unlock(__internal_malloc_lock);
 }
 
-void __env_lock(void* ptr)
+void __env_lock(struct _reent *ptr)
 {
-  pte_osMutexLock(__internal_env_lock);
+  sys_spinlock_lock(__internal_env_lock);
 }
 
-void __env_unlock(void* ptr)
+void __env_unlock(struct _reent *ptr)
 {
-  pte_osMutexUnlock(__internal_env_lock);
+  sys_spinlock_unlock(__internal_env_lock);
 }
