@@ -89,9 +89,9 @@ static __thread void* globalTls = NULL;
 static __thread struct _reent* __myreent_ptr = NULL;
 
 /* lock to protect the heap */
-static spinlock_t* __internal_malloc_lock;
+static reclock_t __internal_malloc_lock = RECURSIVELOCK_INIT;
 /* lock to protect the environment */
-static spinlock_t* __internal_env_lock;
+static reclock_t __internal_env_lock = RECURSIVELOCK_INIT;
 
 static inline tid_t gettid(void)
 {
@@ -112,14 +112,6 @@ static void __reent_init(void)
    * prepare newlib to support reentrant calls
    */
   __myreent_ptr = _impure_ptr;
-
-  /* lock to protect the heap*/
-  sys_spinlock_init(&__internal_malloc_lock);
-  //HERMIT_DEBUG("malloc_lock %p\n", &__internal_malloc_lock);
-
-  /* lock to protect the environment */
-  sys_spinlock_init(&__internal_env_lock);
-  //HERMIT_DEBUG("env_lock %p\n", &__internal_env_lock);
 
   /* initialize pthread library */
   pthread_init();
@@ -604,22 +596,83 @@ int ftime(struct timeb *tb)
  *
  ***************************************************************************/
 
+void reschedule(void);
+int block_current_task(void);
+int wakeup_task(tid_t);
+
+inline static int32_t atomic_inc(atomic_t* d)
+{
+  int32_t res = 1;
+  asm volatile("lock xaddl %0, %1" : "+r"(res), "+m"(d->value) : : "memory", "cc");
+  return res;
+}
+
+inline static int32_t atomic_test_and_set(atomic_t* d, int32_t ret)
+{
+  asm volatile ("xchgl %0, %1" : "=r"(ret) : "m"(d->value), "0"(ret) : "memory");
+  return ret;
+}
+
+inline static int reclock_lock(reclock_t* s)
+{
+  tid_t id = gettid();
+
+  if (s->owner == id) {
+    s->counter++;
+    return 0;
+  }
+
+  while(!atomic_test_and_set(&s->lock, 0)) {
+    s->queue[atomic_inc(&s->pos) % MAX_TASKS] = id;
+    block_current_task();
+    reschedule();
+  }
+
+  s->owner = id;
+  s->counter = 1;
+
+  return 0;
+}
+
+inline static int reclock_unlock(reclock_t* s)
+{
+  s->counter--;
+  if (!s->counter) {
+    uint32_t i = (s->pos.value) % MAX_TASKS;
+
+    s->owner = MAX_TASKS;
+    s->lock.value = 1;
+
+    for(uint32_t k=0; k<MAX_TASKS; k++) {
+      tid_t id = s->queue[i];
+      if (id < MAX_TASKS) {
+        s->queue[i] = MAX_TASKS;
+        if (!wakeup_task(id))
+          return 0;
+      }
+      i = (i + 1) % MAX_TASKS;
+    }
+  }
+
+  return 0;
+}
+
 void __malloc_lock(struct _reent *ptr)
 {
-  sys_spinlock_lock(__internal_malloc_lock);
+  reclock_lock(&__internal_malloc_lock);
 }
 
 void __malloc_unlock(struct _reent *ptr)
 {
-  sys_spinlock_unlock(__internal_malloc_lock);
+  reclock_unlock(&__internal_malloc_lock);
 }
 
 void __env_lock(struct _reent *ptr)
 {
-  sys_spinlock_lock(__internal_env_lock);
+  reclock_lock(&__internal_env_lock);
 }
 
 void __env_unlock(struct _reent *ptr)
 {
-  sys_spinlock_unlock(__internal_env_lock);
+  reclock_unlock(&__internal_env_lock);
 }

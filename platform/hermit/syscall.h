@@ -60,6 +60,22 @@ typedef struct sem sem_t;
 struct spinlock;
 typedef struct spinlock spinlock_t;
 
+#define MAX_CORES	512
+#define MAX_TASKS	((MAX_CORES * 2) + 2)
+
+typedef struct { volatile int32_t value; } atomic_t;
+
+// recursive ticket lock
+typedef struct {
+	atomic_t lock;
+	tid_t owner;
+	uint32_t counter;
+	tid_t queue[MAX_TASKS];
+	atomic_t pos;
+} reclock_t;
+
+#define RECURSIVELOCK_INIT {{1}, MAX_TASKS, 0, {[0 ... MAX_TASKS-1] = MAX_TASKS}, {0}}
+
 /*
  * HermitCore is a libOS.
  * => classical system calls are realized as normal function
