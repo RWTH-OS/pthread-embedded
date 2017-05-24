@@ -89,9 +89,9 @@ static __thread void* globalTls = NULL;
 static __thread struct _reent* __myreent_ptr = NULL;
 
 /* lock to protect the heap */
-static reclock_t __internal_malloc_lock = RECURSIVELOCK_INIT;
+static reclock_t __internal_malloc_lock __attribute__((aligned(64))) = RECURSIVELOCK_INIT;
 /* lock to protect the environment */
-static reclock_t __internal_env_lock = RECURSIVELOCK_INIT;
+static reclock_t __internal_env_lock __attribute__((aligned(64))) = RECURSIVELOCK_INIT;
 
 static inline tid_t gettid(void)
 {
