@@ -1,9 +1,10 @@
 prefix = @prefix@
-NEWLIB = $(prefix)/x86_64-hermit
+target = @target_alias@
+NEWLIB = $(prefix)/$(target)
 MAKE = make
-CC_FOR_TARGET = x86_64-hermit-gcc
-CFLAGS_FOR_TARGET = -m64 -mtls-direct-seg-refs -O3 -ftree-vectorize -I. -Iplatform/hermit -Iplatform/helper -I$(NEWLIB)/include
-AR_FOR_TARGET = x86_64-hermit-ar
+CC_FOR_TARGET = $(target)-gcc
+CFLAGS_FOR_TARGET = -O3 -ftree-vectorize -I. -Iplatform/hermit -Iplatform/helper -I$(NEWLIB)/include
+AR_FOR_TARGET = $(target)-ar
 ARFLAGS_FOR_TARGET = rsv
 CP = cp
 C_source =  $(wildcard *.c) platform/hermit/pte_osal.c platform/helper/tls-helper.c

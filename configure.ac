@@ -4,6 +4,7 @@
 AC_PREREQ(2.69)
 AC_INIT(pte, 1.0, http://pthreads-emb.sourceforge.net, POSIX Threads for embedded systems, http://pthreads-emb.sourceforge.net)
 AC_CONFIG_SRCDIR(pthread_init.c)
+AC_CANONICAL_SYSTEM
 
 # Checks for programs.
 AC_PROG_CC
