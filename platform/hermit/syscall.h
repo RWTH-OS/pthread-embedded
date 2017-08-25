@@ -74,7 +74,7 @@ typedef struct {
 	atomic_t pos;
 } reclock_t;
 
-#define RECURSIVELOCK_INIT {{1}, MAX_TASKS, 0, {[0 ... MAX_TASKS-1] = MAX_TASKS}, {0}}
+#define RECURSIVELOCK_INIT {{0}, MAX_TASKS, 0, {[0 ... MAX_TASKS-1] = MAX_TASKS}, {0}}
 
 /*
  * HermitCore is a libOS.
