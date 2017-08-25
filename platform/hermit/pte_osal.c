@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <reent.h>
 #include <string.h>
+#include <stdatomic.h>
 #include "pte_osal.h"
 #include "pthread.h"
 #include "syscall.h"
@@ -509,42 +510,59 @@ pte_osResult pte_osSemaphoreCancellablePend(pte_osSemaphoreHandle semHandle, uns
 
  inline static int atomic_add(int *ptarg, int val)
  {
+#if x86_64
  	int res = val;
  	asm volatile("lock; xaddl %0, %1" : "=r"(val) : "m"(*ptarg), "0"(val) : "memory", "cc");
  	return res+val;
+#else
+	return val + atomic_fetch_add(ptarg, val);
+#endif
  }
 
 int pte_osAtomicExchange(int *ptarg, int val)
 {
+#if x86_64
  	asm volatile ("lock; xchgl %0, %1" : "=r"(val) : "m"(*ptarg), "0"(val) : "memory");
 
  	return val;
+#else
+	atomic_exchange(ptarg, val);
+#endif
 }
 
 int pte_osAtomicCompareExchange(int *pdest, int exchange, int comp)
 {
+#if x86_64
   int ret;
 
   asm volatile ("lock; cmpxchgl %2, %1" : "=a"(ret), "+m"(*pdest) : "r"(exchange), "0"(*pdest) : "memory", "cc");
 
   return ret;
+#else
+  atomic_compare_exchange_strong(pdest, &exchange, comp);
+  return exchange;
+#endif
 }
 
 int pte_osAtomicExchangeAdd(int volatile* pAddend, int value)
 {
+#if x86_64
   asm volatile ("lock; xaddl %%eax, %2;" : "=a" (value) : "a" (value), "m" (*pAddend) : "memory", "cc");
 
   return value;
+#else
+  return atomic_fetch_add(pAddend, value);
+#endif
 }
 
 int pte_osAtomicDecrement(int *pdest)
 {
-	 return atomic_add(pdest, -1);
+  return atomic_add(pdest, -1);
 }
 
 int pte_osAtomicIncrement(int *pdest)
 {
-	return atomic_add(pdest, 1);
+  return atomic_add(pdest, 1);
 }
 
 /****************************************************************************
@@ -602,15 +620,33 @@ int wakeup_task(tid_t);
 
 inline static int32_t atomic_inc(atomic_t* d)
 {
+#if x86_64
   int32_t res = 1;
   asm volatile("lock xaddl %0, %1" : "+r"(res), "+m"(d->value) : : "memory", "cc");
   return res;
+#else
+  return atomic_add(&d->value, 1);
+#endif
 }
 
-inline static int32_t atomic_test_and_set(atomic_t* d, int32_t ret)
+inline static int32_t atomic_test_and_set(atomic_t* d)
 {
+#if x86_64
+  int ret = 1;
   asm volatile ("xchgl %0, %1" : "=r"(ret) : "m"(d->value), "0"(ret) : "memory");
   return ret;
+#else
+  return atomic_flag_test_and_set(&d->value);
+#endif
+}
+
+inline static void atomic_clear(atomic_t* d)
+{
+#if x86_64
+  d->value = 0;
+#else
+  atomic_flag_clear(&d->value);
+#endif
 }
 
 inline static int reclock_lock(reclock_t* s)
@@ -622,7 +658,7 @@ inline static int reclock_lock(reclock_t* s)
     return 0;
   }
 
-  while(!atomic_test_and_set(&s->lock, 0)) {
+  while(!atomic_test_and_set(&s->lock)) {
     s->queue[atomic_inc(&s->pos) % MAX_TASKS] = id;
     block_current_task();
     reschedule();
@@ -641,7 +677,7 @@ inline static int reclock_unlock(reclock_t* s)
     uint32_t i = (s->pos.value) % MAX_TASKS;
 
     s->owner = MAX_TASKS;
-    s->lock.value = 1;
+    atomic_clear(&s->lock);
 
     for(uint32_t k=0; k<MAX_TASKS; k++) {
       tid_t id = s->queue[i];
