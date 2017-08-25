@@ -1,3 +1,10 @@
+pthread-embedded (1.2.1-1) unstable; urgency=medium
+
+  * add basic aarch64 support
+  * add in Makefile a rule distclean to remove temporary files
+
+ -- Stefan Lankes <slankes@eonerc.rwth-aachen.de>  Sun, 24 Aug 2017 00:31:00 +0100
+
 pthread-embedded (1.2-1) unstable; urgency=medium
 
   * add recursive blocking locks
