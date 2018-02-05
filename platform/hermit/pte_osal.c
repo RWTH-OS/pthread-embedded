@@ -29,7 +29,6 @@
 #include <stdatomic.h>
 #include "pte_osal.h"
 #include "pthread.h"
-#include "syscall.h"
 
 #include "tls-helper.h"
 
@@ -90,9 +89,9 @@ static __thread void* globalTls = NULL;
 static __thread struct _reent* __myreent_ptr = NULL;
 
 /* lock to protect the heap */
-static reclock_t __internal_malloc_lock __attribute__((aligned(64))) = RECURSIVELOCK_INIT;
+static HermitRecursiveMutex* __internal_malloc_lock = NULL;
 /* lock to protect the environment */
-static reclock_t __internal_env_lock __attribute__((aligned(64))) = RECURSIVELOCK_INIT;
+static HermitRecursiveMutex* __internal_env_lock = NULL;
 
 static inline tid_t gettid(void)
 {
@@ -104,15 +103,16 @@ struct _reent * __getreent(void)
   return __myreent_ptr;
 }
 
-/* Declare helper function to terminate the current thread */
-void NORETURN do_exit(int arg);
-
 static void __reent_init(void)
 {
   /*
    * prepare newlib to support reentrant calls
    */
   __myreent_ptr = _impure_ptr;
+
+  /* initialize the recursive mutexes */
+  sys_recmutex_init(&__internal_malloc_lock);
+  sys_recmutex_init(&__internal_env_lock);
 
   /* initialize pthread library */
   pthread_init();
@@ -132,7 +132,7 @@ static void hermitStubThreadEntry(void *argv)
   hermitThreadData *pThreadData = (hermitThreadData *) argv;
 
   if (!pThreadData || !pThreadData->myreent)
-    do_exit(-PTE_OS_NO_RESOURCES);
+    sys_exit(-PTE_OS_NO_RESOURCES);
 
   /* prepare newlib to support reentrant calls */
   __myreent_ptr = pThreadData->myreent;
@@ -149,7 +149,7 @@ static void hermitStubThreadEntry(void *argv)
   if (globalTls == NULL)
     {
       HERMIT_DEBUG("pteTlsThreadInit: PTE_OS_NO_RESOURCES\n");
-      do_exit(-PTE_OS_NO_RESOURCES);
+      sys_exit(-PTE_OS_NO_RESOURCES);
     }
 
   /* wait for the resume command */
@@ -319,7 +319,7 @@ void pte_osThreadExit(void)
 
   pThreadData->done = 1;
   pte_osSemaphorePost(pThreadData->stop_sem, 1);
-  do_exit(0);
+  sys_exit(0);
 }
 
 /*
@@ -395,8 +395,8 @@ int pte_osThreadGetDefaultPriority(void)
 
 pte_osResult pte_osMutexCreate(pte_osMutexHandle *pHandle)
 {
-  if (sys_sem_init((sem_t**) pHandle, 1/*, 1*/))
-    return PTE_OS_NO_RESOURCES;	
+  if (sys_sem_init(pHandle, 1))
+    return PTE_OS_NO_RESOURCES;
 
   return PTE_OS_OK;
 }
@@ -412,7 +412,7 @@ pte_osResult pte_osMutexDelete(pte_osMutexHandle handle)
 pte_osResult pte_osMutexLock(pte_osMutexHandle handle)
 {
   if (sys_sem_wait(handle))
-    return PTE_OS_NO_RESOURCES;		
+    return PTE_OS_NO_RESOURCES;
 
   return PTE_OS_OK;
 }
@@ -424,7 +424,6 @@ pte_osResult pte_osMutexTimedLock(pte_osMutexHandle handle, unsigned int timeout
 
   return PTE_OS_OK;
 }
-
 
 pte_osResult pte_osMutexUnlock(pte_osMutexHandle handle)
 {
@@ -442,7 +441,7 @@ pte_osResult pte_osMutexUnlock(pte_osMutexHandle handle)
 
 pte_osResult pte_osSemaphoreCreate(int initialValue, pte_osSemaphoreHandle *pHandle)
 {
-  if (sys_sem_init((sem_t**) pHandle, initialValue/*, SEM_VALUE_MAX*/))
+  if (sys_sem_init(pHandle, initialValue))
     return PTE_OS_NO_RESOURCES;
 
   return PTE_OS_OK;
@@ -461,8 +460,9 @@ pte_osResult pte_osSemaphorePost(pte_osSemaphoreHandle handle, int count)
   int i;
 
   for (i=0; i<count; i++) {
-    if (sys_sem_post(handle))
+    if (sys_sem_post(handle)) {
        return PTE_OS_NO_RESOURCES;
+    }
   }
 
   return PTE_OS_OK;
@@ -471,11 +471,13 @@ pte_osResult pte_osSemaphorePost(pte_osSemaphoreHandle handle, int count)
 pte_osResult pte_osSemaphorePend(pte_osSemaphoreHandle handle, unsigned int *pTimeoutMsecs)
 {
   if (pTimeoutMsecs && *pTimeoutMsecs) {
-    if (sys_sem_timedwait(handle, *pTimeoutMsecs))
+    if (sys_sem_timedwait(handle, *pTimeoutMsecs)) {
       return PTE_OS_TIMEOUT;
+    }
   } else {
-    if (sys_sem_wait(handle))
+    if (sys_sem_wait(handle)) {
       return PTE_OS_NO_RESOURCES;
+    }
   }
 
   return PTE_OS_OK;
@@ -614,101 +616,22 @@ int ftime(struct timeb *tb)
  *
  ***************************************************************************/
 
-void reschedule(void);
-int block_current_task(void);
-int wakeup_task(tid_t);
-
-inline static int32_t atomic_inc(atomic_t* d)
-{
-#ifdef __x86_64__
-  int32_t res = 1;
-  asm volatile("lock xaddl %0, %1" : "+r"(res), "+m"(d->value) : : "memory", "cc");
-  return res;
-#else
-  return atomic_add(&d->value, 1);
-#endif
-}
-
-inline static int32_t atomic_test_and_set(atomic_t* d)
-{
-#ifdef __x86_64__
-  int ret = 1;
-  asm volatile ("xchgl %0, %1" : "=r"(ret) : "m"(d->value), "0"(ret) : "memory");
-  return ret;
-#else
-  return atomic_flag_test_and_set(&d->value);
-#endif
-}
-
-inline static void atomic_clear(atomic_t* d)
-{
-#ifdef __x86_64__
-  d->value = 0;
-#else
-  atomic_flag_clear(&d->value);
-#endif
-}
-
-inline static int reclock_lock(reclock_t* s)
-{
-  tid_t id = gettid();
-
-  if (s->owner == id) {
-    s->counter++;
-    return 0;
-  }
-
-  while(atomic_test_and_set(&s->lock)) {
-    s->queue[atomic_inc(&s->pos) % MAX_TASKS] = id;
-    block_current_task();
-    reschedule();
-  }
-
-  s->owner = id;
-  s->counter = 1;
-
-  return 0;
-}
-
-inline static int reclock_unlock(reclock_t* s)
-{
-  s->counter--;
-  if (!s->counter) {
-    uint32_t i = (s->pos.value) % MAX_TASKS;
-
-    s->owner = MAX_TASKS;
-    atomic_clear(&s->lock);
-
-    for(uint32_t k=0; k<MAX_TASKS; k++) {
-      tid_t id = s->queue[i];
-      if (id < MAX_TASKS) {
-        s->queue[i] = MAX_TASKS;
-        if (!wakeup_task(id))
-          return 0;
-      }
-      i = (i + 1) % MAX_TASKS;
-    }
-  }
-
-  return 0;
-}
-
 void __malloc_lock(struct _reent *ptr)
 {
-  reclock_lock(&__internal_malloc_lock);
+  sys_recmutex_lock(__internal_malloc_lock);
 }
 
 void __malloc_unlock(struct _reent *ptr)
 {
-  reclock_unlock(&__internal_malloc_lock);
+  sys_recmutex_unlock(__internal_malloc_lock);
 }
 
 void __env_lock(struct _reent *ptr)
 {
-  reclock_lock(&__internal_env_lock);
+  sys_recmutex_lock(__internal_env_lock);
 }
 
 void __env_unlock(struct _reent *ptr)
 {
-  reclock_unlock(&__internal_env_lock);
+  sys_recmutex_unlock(__internal_env_lock);
 }

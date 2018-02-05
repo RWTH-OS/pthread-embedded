@@ -25,56 +25,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @author Stefan Lankes
- * @file include/hermit/syscall.h
- * @brief System call number definitions
- *
- * This file contains define constants for every syscall's number.
+
+/*
+ * Standalone version of include/hermit/syscall.h that only contains definitions
+ * needed for pthread-embedded.
  */
+
 
 #ifndef __SYSCALL_H__
 #define __SYSCALL_H__
-
-#ifdef __KERNEL__
-#include <hermit/stddef.h>
-#else
-#include <stdlib.h>
-#include <stdint.h>
-#include <sys/types.h>
 
 #ifndef NORETURN
 #define NORETURN	__attribute__((noreturn))
 #endif
 
 typedef unsigned int tid_t;
-#endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-struct sem;
-typedef struct sem sem_t;
+/* Opaque structures */
+struct _HermitRecursiveMutex;
+typedef struct _HermitRecursiveMutex HermitRecursiveMutex;
 
-struct spinlock;
-typedef struct spinlock spinlock_t;
+struct _HermitSemaphore;
+typedef struct _HermitSemaphore HermitSemaphore;
 
-#define MAX_CORES	512
-#define MAX_TASKS	((MAX_CORES * 2) + 2)
-
-typedef struct { volatile int32_t value; } atomic_t;
-
-// recursive ticket lock
-typedef struct {
-	atomic_t lock;
-	tid_t owner;
-	uint32_t counter;
-	tid_t queue[MAX_TASKS];
-	atomic_t pos;
-} reclock_t;
-
-#define RECURSIVELOCK_INIT {{0}, MAX_TASKS, 0, {[0 ... MAX_TASKS-1] = MAX_TASKS}, {0}}
 
 /*
  * HermitCore is a libOS.
@@ -82,91 +56,23 @@ typedef struct {
  * => forward declaration of system calls as function
  */
 tid_t sys_getpid(void);
-int sys_fork(void);
-int sys_wait(int* status);
-int sys_execve(const char* name, char * const * argv, char * const * env);
 int sys_getprio(tid_t* id);
 int sys_setprio(tid_t* id, int prio);
 void NORETURN sys_exit(int arg);
-ssize_t sys_read(int fd, char* buf, size_t len);
-ssize_t sys_write(int fd, const char* buf, size_t len);
-ssize_t sys_sbrk(int incr);
-int sys_open(const char* name, int flags, int mode);
-int sys_close(int fd);
 void sys_msleep(unsigned int ms);
-int sys_spinlock_init(spinlock_t** lock);
-int sys_spinlock_destroy(spinlock_t* lock);
-int sys_spinlock_lock(spinlock_t* lock);
-int sys_spinlock_unlock(spinlock_t* lock);
-int sys_sem_init(sem_t** sem, unsigned int value);
-int sys_sem_destroy(sem_t* sem);
-int sys_sem_wait(sem_t* sem);
-int sys_sem_post(sem_t* sem);
-int sys_sem_timedwait(sem_t *sem, unsigned int ms);
-int sys_sem_cancelablewait(sem_t* sem, unsigned int ms);
+int sys_recmutex_init(HermitRecursiveMutex** recmutex);
+int sys_recmutex_destroy(HermitRecursiveMutex* recmutex);
+int sys_recmutex_lock(HermitRecursiveMutex* recmutex);
+int sys_recmutex_unlock(HermitRecursiveMutex* recmutex);
+int sys_sem_init(HermitSemaphore** sem, unsigned int value);
+int sys_sem_destroy(HermitSemaphore* sem);
+int sys_sem_wait(HermitSemaphore* sem);
+int sys_sem_post(HermitSemaphore* sem);
+int sys_sem_trywait(HermitSemaphore* sem);
+int sys_sem_timedwait(HermitSemaphore *sem, unsigned int ms);
+int sys_sem_cancelablewait(HermitSemaphore* sem, unsigned int ms);
 int sys_clone(tid_t* id, void* ep, void* argv);
-off_t sys_lseek(int fd, off_t offset, int whence);
 size_t sys_get_ticks(void);
 void sys_yield(void);
-
-#define __NR_exit 		0
-#define __NR_write		1
-#define __NR_open		2
-#define __NR_close		3
-#define __NR_read		4
-#define __NR_lseek		5
-#define __NR_unlink		6
-#define __NR_getpid		7
-#define __NR_kill		8
-#define __NR_fstat		9
-#define __NR_sbrk		10
-#define __NR_fork		11
-#define __NR_wait		12
-#define __NR_execve		13
-#define __NR_times		14
-#define __NR_stat		15
-#define __NR_dup		16
-#define __NR_dup2		17
-#define __NR_msleep		18
-#define __NR_yield		19
-#define __NR_sem_init		20
-#define __NR_sem_destroy	21
-#define __NR_sem_wait		22
-#define __NR_sem_post		23
-#define __NR_sem_timedwait	24
-#define __NR_getprio		25
-#define __NR_setprio		26
-#define __NR_clone		27
-#define __NR_sem_cancelablewait	28
-#define __NR_get_ticks		29
-
-#ifndef __KERNEL__
-inline static long
-syscall(int nr, unsigned long arg0, unsigned long arg1, unsigned long arg2)
-{
-	long res;
-
-	// note: syscall stores the return address in rcx and rflags in r11
-	asm volatile ("syscall"
-		: "=a" (res)
-		: "a" (nr), "D" (arg0), "S" (arg1), "d" (arg2)
-		: "memory", "%rcx", "%r11");
-
-	return res;
-}
-
-#define SYSCALL0(NR) \
-	syscall(NR, 0, 0, 0)
-#define SYSCALL1(NR, ARG0) \
-	syscall(NR, (unsigned long)ARG0, 0, 0)
-#define SYSCALL2(NR, ARG0, ARG1) \
-	syscall(NR, (unsigned long)ARG0, (unsigned long)ARG1, 0)
-#define SYSCALL3(NR, ARG0, ARG1, ARG2) \
-	syscall(NR, (unsigned long)ARG0, (unsigned long)ARG1, (unsigned long)ARG2)
-#endif // __KERNEL__
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

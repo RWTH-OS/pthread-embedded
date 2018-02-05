@@ -49,10 +49,6 @@
 #include "implement.h"
 #include "sched.h"
 
-#ifdef __hermit__
-void reschedule (void);
-#endif
-
 int
 sched_yield (void)
 /*
@@ -80,11 +76,7 @@ sched_yield (void)
  * ------------------------------------------------------
  */
 {
-#ifdef __hermit__
-  reschedule ();
-#else
   pte_osYield ();
-#endif
 
   return 0;
 }
