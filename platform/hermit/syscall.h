@@ -66,10 +66,10 @@ int sys_recmutex_lock(HermitRecursiveMutex* recmutex);
 int sys_recmutex_unlock(HermitRecursiveMutex* recmutex);
 int sys_sem_init(HermitSemaphore** sem, unsigned int value);
 int sys_sem_destroy(HermitSemaphore* sem);
-int sys_sem_wait(HermitSemaphore* sem);
 int sys_sem_post(HermitSemaphore* sem);
 int sys_sem_trywait(HermitSemaphore* sem);
 int sys_sem_timedwait(HermitSemaphore *sem, unsigned int ms);
+#define sys_sem_wait(sem)	sys_sem_timedwait(sem, 0)
 int sys_sem_cancelablewait(HermitSemaphore* sem, unsigned int ms);
 int sys_clone(tid_t* id, void* ep, void* argv);
 size_t sys_get_ticks(void);
