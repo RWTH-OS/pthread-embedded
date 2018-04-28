@@ -89,11 +89,6 @@ static __thread void* globalHandle = NULL;
 static __thread void* globalTls = NULL;
 static __thread struct _reent* __myreent_ptr = NULL;
 
-/* lock to protect the heap */
-static reclock_t __internal_malloc_lock __attribute__((aligned(64))) = RECURSIVELOCK_INIT;
-/* lock to protect the environment */
-static reclock_t __internal_env_lock __attribute__((aligned(64))) = RECURSIVELOCK_INIT;
-
 static inline tid_t gettid(void)
 {
   return sys_getpid();
@@ -614,101 +609,27 @@ int ftime(struct timeb *tb)
  *
  ***************************************************************************/
 
-void reschedule(void);
-int block_current_task(void);
-int wakeup_task(tid_t);
-
-inline static int32_t atomic_inc(atomic_t* d)
-{
-#ifdef __x86_64__
-  int32_t res = 1;
-  asm volatile("lock xaddl %0, %1" : "+r"(res), "+m"(d->value) : : "memory", "cc");
-  return res;
-#else
-  return atomic_add(&d->value, 1);
-#endif
-}
-
-inline static int32_t atomic_test_and_set(atomic_t* d)
-{
-#ifdef __x86_64__
-  int ret = 1;
-  asm volatile ("xchgl %0, %1" : "=r"(ret) : "m"(d->value), "0"(ret) : "memory");
-  return ret;
-#else
-  return atomic_flag_test_and_set(&d->value);
-#endif
-}
-
-inline static void atomic_clear(atomic_t* d)
-{
-#ifdef __x86_64__
-  d->value = 0;
-#else
-  atomic_flag_clear(&d->value);
-#endif
-}
-
-inline static int reclock_lock(reclock_t* s)
-{
-  tid_t id = gettid();
-
-  if (s->owner == id) {
-    s->counter++;
-    return 0;
-  }
-
-  while(atomic_test_and_set(&s->lock)) {
-    s->queue[atomic_inc(&s->pos) % MAX_TASKS] = id;
-    block_current_task();
-    reschedule();
-  }
-
-  s->owner = id;
-  s->counter = 1;
-
-  return 0;
-}
-
-inline static int reclock_unlock(reclock_t* s)
-{
-  s->counter--;
-  if (!s->counter) {
-    uint32_t i = (s->pos.value) % MAX_TASKS;
-
-    s->owner = MAX_TASKS;
-    atomic_clear(&s->lock);
-
-    for(uint32_t k=0; k<MAX_TASKS; k++) {
-      tid_t id = s->queue[i];
-      if (id < MAX_TASKS) {
-        s->queue[i] = MAX_TASKS;
-        if (!wakeup_task(id))
-          return 0;
-      }
-      i = (i + 1) % MAX_TASKS;
-    }
-  }
-
-  return 0;
-}
+void __sys_malloc_lock(void);
+void __sys_malloc_unlock(void);
+void __sys_env_lock(void);
+void __sys_env_unlock(void);
 
 void __malloc_lock(struct _reent *ptr)
 {
-  reclock_lock(&__internal_malloc_lock);
+  __sys_malloc_lock();
 }
 
 void __malloc_unlock(struct _reent *ptr)
 {
-  reclock_unlock(&__internal_malloc_lock);
+  __sys_malloc_unlock();
 }
 
 void __env_lock(struct _reent *ptr)
 {
-  reclock_lock(&__internal_env_lock);
+  __sys_env_lock();
 }
 
 void __env_unlock(struct _reent *ptr)
 {
-  reclock_unlock(&__internal_env_lock);
+  __sys_env_unlock();
 }
