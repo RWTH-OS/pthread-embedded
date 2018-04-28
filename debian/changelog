@@ -2,6 +2,8 @@ pthread-embedded (1.2.2-1) unstable; urgency=medium
 
   * move lock to protect the heap and the environmemt to libhermit
 
+ -- Stefan Lankes <slankes@eonerc.rwth-aachen.de>  Sun, 28 Aug 2018 16:50:00 +0100
+
 pthread-embedded (1.2.1-1) unstable; urgency=medium
 
   * add basic aarch64 support
