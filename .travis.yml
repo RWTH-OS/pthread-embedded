@@ -13,9 +13,9 @@ before_install:
 
 script:
 - cd ..
-- mv pthread-embedded pthread-embedded-1.2.1
-- tar czf pthread-embedded_1.2.1.orig.tar.gz pthread-embedded-1.2.1 --exclude=.git
-- cd pthread-embedded-1.2.1
+- mv pthread-embedded pthread-embedded-1.2.2
+- tar czf pthread-embedded_1.2.2.orig.tar.gz pthread-embedded-1.2.2 --exclude=.git
+- cd pthread-embedded-1.2.2
 - time debuild -e PATH -us -uc -j2
 
 deploy:
