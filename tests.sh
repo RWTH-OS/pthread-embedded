@@ -41,7 +41,7 @@ export PATH=/opt/hermit/bin:$PATH
 
 ./configure --target=x86_64-hermit --prefix=/opt/hermit
 make -j2
-checkinstall -D -y --exclude=build --pkggroup=main --maintainer=stefan@eonerc.rwth-aachen.de --pkgsource=https://hermitcore.org --pkgname=pte-hermit --pkgversion=1.2.2 --pkglicense=LGPL2 make install
+checkinstall -D -y --exclude=build --pkggroup=main --maintainer=stefan@eonerc.rwth-aachen.de --pkgsource=https://hermitcore.org --pkgname=pte-hermit --pkgversion=1.2.2 --pkglicense=LGPL2 --conflicts=pte-hermit-rs make install
 
 mkdir -p tmp
 dpkg-deb -R pte-hermit_1.2.2-1_amd64.deb tmp
