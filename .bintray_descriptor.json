@@ -1,31 +1,33 @@
 {
-    "package": {
-        "name": "pthread-embedded",
-	"repo": "hermitcore",
-        "subject": "rwth-os",
-        "website_url": "http://www.hermitcore.org",
-        "issue_tracker_url": "https://github.com/RWTH-OS/HermitCore/issues",
-        "vcs_url": "https://github.com/RWTH-OS/pthread-embedded.git",
-        "github_release_notes_file": "RELEASE",
-        "licenses": ["LGPL 2.1"],
-        "public_download_numbers": false,
-        "public_stats": false
-    },
+     "package": {
+         "name": "pte-hermit-rs",
+         "repo": "ubuntu",
+         "subject": "hermitcore",
+         "desc": "Cross-toolchain for HermitCore",
+         "website_url": "https://hermitcore.org",
+         "issue_tracker_url": "https://github.com/RWTH-OS/HermitCore/issues",
+         "vcs_url": "https://github.com/hermitcore/pthread-embedded.git",
+         "github_use_tag_release_notes": false,
+         "github_release_notes_file": "RELEASE",
+         "licenses": ["LGPL2"],
+         "public_download_numbers": false,
+         "public_stats": false
+     },
 
-    "version": {
-        "name": "1.2.1",
-        "desc": "HermitCore's Pthread library",
-        "gpgSign": false
-    },
+     "version": {
+         "name": "1.2.2",
+         "desc": "POSIX Threads for embedded systems (PTE)",
+	 "gpgSign": false
+     },
 
-    "files":
-    [{
-      "includePattern": "../(pthread[^/]*deb$)", "uploadPattern": "$1",
-      "matrixParams": {
-        "deb_distribution": "vivid",
-        "deb_component": "main",
-        "deb_architecture": "amd64",
-	"override": 1}
-    }],
-    "publish": true
-}
+     "files":
+     [{
+       "includePattern": "../(pte[^/]*deb$)", "uploadPattern": "$1",
+       "matrixParams": {
+         "deb_distribution": "bionic",
+         "deb_component": "main",
+         "deb_architecture": "amd64",
+         "override": 1}
+     }],
+     "publish": true
+ }
