@@ -22,7 +22,7 @@
 
      "files":
      [{
-       "includePattern": "../(pthread[^/]*deb$)", "uploadPattern": "$1",
+       "includePattern": "../(pte[^/]*deb$)", "uploadPattern": "$1",
        "matrixParams": {
          "deb_distribution": "bionic",
          "deb_component": "main",
