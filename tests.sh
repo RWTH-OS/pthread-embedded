@@ -45,7 +45,7 @@ checkinstall -D -y --exclude=build --pkggroup=main --maintainer=stefan@eonerc.rw
 
 cd ..
 mkdir -p tmp
-dpkg-deb -R build/pte-hermit_1.2.2-1_amd64.deb tmp
-rm -f build/pte-hermit_1.2.2-1_amd64.deb
+dpkg-deb -R pte-hermit_1.2.2-1_amd64.deb tmp
+rm -f pte-hermit_1.2.2-1_amd64.deb
 
 fi
