@@ -258,6 +258,7 @@ pte_osResult pte_osThreadCreate(pte_osThreadEntryPoint entryPoint,
   pte_osSemaphoreCreate(0, &pThreadData->start_sem);
   pte_osSemaphoreCreate(0, &pThreadData->stop_sem);
   pThreadData->done = 0;
+  //HERMIT_DEBUG("pThreadData %p\n", pThreadData);
   //HERMIT_DEBUG("init start_sem %p\n", pThreadData->start_sem);
   //HERMIT_DEBUG("init stop_sem %p\n", pThreadData->stop_sem);
 
@@ -510,7 +511,7 @@ pte_osResult pte_osSemaphoreCancellablePend(pte_osSemaphoreHandle semHandle, uns
  	asm volatile("lock; xaddl %0, %1" : "=r"(val) : "m"(*ptarg), "0"(val) : "memory", "cc");
  	return res+val;
 #else
-	return val + atomic_fetch_add(ptarg, val);
+	return __atomic_add_fetch(ptarg, val, __ATOMIC_SEQ_CST);
 #endif
  }
 
@@ -521,7 +522,11 @@ int pte_osAtomicExchange(int *ptarg, int val)
 
  	return val;
 #else
-	atomic_exchange(ptarg, val);
+	int ret;
+
+	__atomic_exchange(ptarg, &val, &ret, __ATOMIC_SEQ_CST);
+
+	return ret;
 #endif
 }
 
@@ -534,7 +539,7 @@ int pte_osAtomicCompareExchange(int *pdest, int exchange, int comp)
 
   return ret;
 #else
-  atomic_compare_exchange_strong(pdest, &exchange, comp);
+  __atomic_compare_exchange(pdest, &comp, &exchange, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
   return exchange;
 #endif
 }
@@ -546,7 +551,7 @@ int pte_osAtomicExchangeAdd(int volatile* pAddend, int value)
 
   return value;
 #else
-  return atomic_fetch_add(pAddend, value);
+  return __atomic_fetch_add(pAddend, value, __ATOMIC_SEQ_CST);
 #endif
 }
 
