@@ -27,6 +27,7 @@
 #include <reent.h>
 #include <string.h>
 #include <stdatomic.h>
+#include <sys/time.h>
 #include "pte_osal.h"
 #include "pthread.h"
 
@@ -602,10 +603,11 @@ pte_osResult pte_osTlsFree(unsigned int index)
 
 int ftime(struct timeb *tb)
 {
-  uint64_t ticks = sys_get_ticks();
+  struct timeval tv;
 
-  tb->time = ticks / TIMER_FREQ;
-  tb->millitm = (ticks % TIMER_FREQ) * (TIMER_FREQ*1000);
+  sys_gettimeofday((HermitTimeval*)&tv, NULL);
+  tb->time = tv.tv_sec;
+  tb->millitm = tv.tv_usec / 1000;
 
   return 0;
 }
